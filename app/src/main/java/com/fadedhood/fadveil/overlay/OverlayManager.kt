@@ -28,6 +28,7 @@ import android.view.Gravity
 import android.graphics.drawable.GradientDrawable
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 import android.view.ViewGroup
 import kotlin.random.Random
 
@@ -109,9 +110,9 @@ class OverlayManager(private val context: Context) {
         overlayView.apply {
             radius = context.resources.getDimension(R.dimen.overlay_corner_radius)
             cardElevation = 0f
-            setCardBackgroundColor(Color.BLACK)
+            background = ColorDrawable(Color.BLACK)
+            setCardBackgroundColor(Color.TRANSPARENT)
             alpha = opacity / 100f
-            strokeWidth = 0
         }
         windowManager.addView(overlayView, overlayParams)
     }
@@ -175,6 +176,7 @@ class OverlayManager(private val context: Context) {
             val inflater = LayoutInflater.from(themedContext)
             val container = inflater.inflate(R.layout.overlay_control_panel, null) as ViewGroup
 
+            // Setup control panel window parameters
             val params = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -186,6 +188,29 @@ class OverlayManager(private val context: Context) {
                 gravity = Gravity.CENTER
             }
 
+            // Setup mode toggle
+            container.findViewById<MaterialButtonToggleGroup>(R.id.modeToggleGroup)?.apply {
+                check(if (isPixelateMode) R.id.pixelateMode else R.id.blackMode)
+                addOnButtonCheckedListener { _, checkedId, isChecked ->
+                    if (isChecked) {
+                        when (checkedId) {
+                            R.id.blackMode -> {
+                                isPixelateMode = false
+                                container.findViewById<Slider>(R.id.pixelateSlider)?.visibility = View.GONE
+                                switchToBlackMode()
+                            }
+                            R.id.pixelateMode -> {
+                                isPixelateMode = true
+                                container.findViewById<Slider>(R.id.pixelateSlider)?.visibility = View.VISIBLE
+                                overlayView.background = null
+                                overlayView.setCardBackgroundColor(Color.TRANSPARENT)
+                                updatePixelateEffect()
+                            }
+                        }
+                    }
+                }
+            }
+
             // Setup opacity slider
             container.findViewById<Slider>(R.id.opacitySlider)?.apply {
                 valueFrom = 10f
@@ -193,7 +218,8 @@ class OverlayManager(private val context: Context) {
                 value = opacity.toFloat()
                 addOnChangeListener { _, value, fromUser ->
                     if (fromUser) {
-                        setOpacity(value.toInt())
+                        opacity = value.toInt()
+                        overlayView.alpha = opacity / 100f
                     }
                 }
             }
@@ -201,10 +227,10 @@ class OverlayManager(private val context: Context) {
             // Setup pixelate slider
             container.findViewById<Slider>(R.id.pixelateSlider)?.apply {
                 visibility = if (isPixelateMode) View.VISIBLE else View.GONE
-                valueFrom = 1f    // Smallest pixels (largest number of them)
-                valueTo = 50f     // Largest pixels (smallest number of them)
+                valueFrom = 1f
+                valueTo = 50f
                 value = pixelSize.toFloat()
-                stepSize = 1f     // Ensure whole number steps
+                stepSize = 1f
                 addOnChangeListener { _, value, fromUser ->
                     if (fromUser) {
                         pixelSize = value.toInt()
@@ -215,22 +241,7 @@ class OverlayManager(private val context: Context) {
                 }
             }
 
-            // Setup mode toggle
-            container.findViewById<MaterialButtonToggleGroup>(R.id.modeToggleGroup)?.apply {
-                check(if (isPixelateMode) R.id.pixelateMode else R.id.blackMode)
-                addOnButtonCheckedListener { _, checkedId, isChecked ->
-                    if (isChecked) {
-                        val newPixelateMode = (checkedId == R.id.pixelateMode)
-                        if (isPixelateMode != newPixelateMode) {
-                            isPixelateMode = newPixelateMode
-                            container.findViewById<Slider>(R.id.pixelateSlider)?.visibility =
-                                if (isPixelateMode) View.VISIBLE else View.GONE
-                            updateOverlayAppearance()
-                        }
-                    }
-                }
-            }
-
+            // Add close button handler
             container.findViewById<View>(R.id.closeButton)?.setOnClickListener {
                 hideControlPanel()
             }
@@ -250,7 +261,7 @@ class OverlayManager(private val context: Context) {
     private fun updateOverlayAppearance() {
         synchronized(bitmapLock) {
             if (isPixelateMode) {
-                overlayView.setCardBackgroundColor(Color.TRANSPARENT)
+                overlayView.background = null
                 updatePixelateEffect()
             } else {
                 // Clean up pixelation resources
@@ -258,17 +269,21 @@ class OverlayManager(private val context: Context) {
                 currentDrawable?.bitmap?.recycle()
                 currentDrawable = null
                 
-                // Reset to solid black
+                // Reset to solid black with current opacity
                 overlayView.background = null
                 overlayView.setCardBackgroundColor(Color.BLACK)
-                overlayView.alpha = opacity / 100f
+                overlayView.alpha = opacity / 100f  // Ensure opacity is maintained
             }
         }
     }
 
     private fun setOpacity(value: Int) {
         opacity = value.coerceIn(10, 100)
-        overlayView.alpha = opacity / 100f  // Always apply opacity to the view directly
+        if (isPixelateMode) {
+            overlayView.alpha = opacity / 100f
+        } else {
+            overlayView.alpha = opacity / 100f
+        }
     }
 
     private fun updatePixelateEffect() {
@@ -345,12 +360,7 @@ class OverlayManager(private val context: Context) {
     }
 
     fun destroy() {
-        synchronized(bitmapLock) {
-            isDestroyed = true
-            mainHandler.removeCallbacksAndMessages(null)
-            currentDrawable?.bitmap?.recycle()
-            currentDrawable = null
-        }
+        cleanupPixelMode()
         hideControlPanel()
         try {
             windowManager.removeView(overlayView)
@@ -367,6 +377,46 @@ class OverlayManager(private val context: Context) {
                 isResizing = false
                 updatePixelateEffect()
             }, 250) // Wait a bit before restarting effect
+        }
+    }
+
+    private fun cleanupPixelMode() {
+        mainHandler.removeCallbacksAndMessages(null)
+        synchronized(bitmapLock) {
+            try {
+                overlayView.background = null // Remove background first
+                currentDrawable?.let {
+                    it.bitmap?.recycle()
+                    currentDrawable = null
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun switchToBlackMode() {
+        synchronized(bitmapLock) {
+            try {
+                // Stop pixel mode updates
+                mainHandler.removeCallbacksAndMessages(null)
+                
+                // Clean up existing resources
+                overlayView.background = null
+                currentDrawable?.bitmap?.recycle()
+                currentDrawable = null
+                
+                // Create a new black background
+                overlayView.post {
+                    // Instead of using CardView's background color, create a solid black drawable
+                    val blackDrawable = ColorDrawable(Color.BLACK)
+                    overlayView.background = blackDrawable
+                    overlayView.setCardBackgroundColor(Color.TRANSPARENT) // Clear card background
+                    overlayView.alpha = opacity / 100f
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 } 
