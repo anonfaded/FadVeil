@@ -31,4 +31,5 @@
     <string name="pixelate_mode">Pixelate</string>
     <string name="opacity_slider">Opacity</string>
     <string name="pixelate_slider">Pixel Size</string>
+    <string name="close">Close</string>
 </resources>

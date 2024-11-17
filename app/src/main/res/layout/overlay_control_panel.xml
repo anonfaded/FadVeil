@@ -1,58 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="8dp"
+    android:theme="@style/Theme.Material3.DayNight">
 
-    <!-- Mode Switch -->
-    <com.google.android.material.button.MaterialButtonToggleGroup
-        android:id="@+id/modeToggleGroup"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        app:singleSelection="true">
-        
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/modeToggleGroup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/blackMode"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Black" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/pixelateMode"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pixelate" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/opacitySlider"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:value="80"
+            android:valueFrom="10"
+            android:valueTo="100"
+            app:labelBehavior="floating" />
+
+        <com.google.android.material.slider.Slider
+            android:id="@+id/pixelateSlider"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="4dp"
+            android:value="50"
+            android:valueFrom="10"
+            android:valueTo="100" />
+
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/blackMode"
+            android:id="@+id/closeButton"
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/black_mode" />
-            
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/pixelateMode"
-            style="?attr/materialButtonOutlinedStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/pixelate_mode" />
-    </com.google.android.material.button.MaterialButtonToggleGroup>
+            android:layout_gravity="end"
+            android:text="Close" />
+    </LinearLayout>
 
-    <!-- Opacity Slider -->
-    <com.google.android.material.slider.Slider
-        android:id="@+id/opacitySlider"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:contentDescription="@string/opacity_slider"
-        android:value="80"
-        android:valueFrom="0"
-        android:valueTo="100"
-        android:stepSize="1"
-        app:labelBehavior="floating" />
-
-    <!-- Pixelation Slider -->
-    <com.google.android.material.slider.Slider
-        android:id="@+id/pixelateSlider"
-        android:layout_width="200dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="4dp"
-        android:contentDescription="@string/pixelate_slider"
-        android:value="50"
-        android:valueFrom="0"
-        android:valueTo="100"
-        android:stepSize="1"
-        app:labelBehavior="floating" />
-
-</LinearLayout> 
+</com.google.android.material.card.MaterialCardView> 
