@@ -15,4 +15,20 @@
     <string name="about_app_name">FadVeil</string>
     <string name="about_version">Version 1.0</string>
     <string name="about_description">A simple overlay app that helps you create movable dark spots on your screen.</string>
+    
+    <!-- Overlay Controls -->
+
+    <string name="notification_text">Overlay is active</string>
+    <string name="percentage_format">%d%%</string>
+    
+    <!-- Tutorial strings -->
+    <string name="resize_hint">Pinch to resize the overlay</string>
+    <string name="mode_hint">Double tap to switch modes</string>
+    <string name="control_hint">Long press to show controls</string>
+    
+    <!-- Mode strings -->
+    <string name="black_mode">Black</string>
+    <string name="pixelate_mode">Pixelate</string>
+    <string name="opacity_slider">Opacity</string>
+    <string name="pixelate_slider">Pixel Size</string>
 </resources>
