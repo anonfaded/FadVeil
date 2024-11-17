@@ -31,6 +31,8 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.view.ViewGroup
 import kotlin.random.Random
+import android.graphics.Path
+import android.graphics.RectF
 
 class OverlayManager(private val context: Context) {
     private val themedContext = ContextThemeWrapper(
@@ -110,9 +112,10 @@ class OverlayManager(private val context: Context) {
         overlayView.apply {
             radius = context.resources.getDimension(R.dimen.overlay_corner_radius)
             cardElevation = 0f
-            background = ColorDrawable(Color.BLACK)
+            background = createRoundedDrawable(Color.BLACK)
             setCardBackgroundColor(Color.TRANSPARENT)
             alpha = opacity / 100f
+            clipToOutline = true
         }
         windowManager.addView(overlayView, overlayParams)
     }
@@ -291,7 +294,6 @@ class OverlayManager(private val context: Context) {
             if (isUpdating || isDestroyed) return
             isUpdating = true
 
-            mainHandler.removeCallbacksAndMessages(null)
             mainHandler.post {
                 try {
                     val width = overlayView.width
@@ -301,25 +303,32 @@ class OverlayManager(private val context: Context) {
                         return@post
                     }
 
-                    // Create new bitmap
+                    // Create new bitmap with transparency
                     val newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                     val canvas = Canvas(newBitmap)
                     val paint = android.graphics.Paint().apply {
                         style = android.graphics.Paint.Style.FILL
+                        isAntiAlias = true
                     }
 
-                    // Fill background with black first
-                    canvas.drawColor(Color.BLACK)
+                    // Create path for rounded corners
+                    val path = Path()
+                    val cornerRadius = context.resources.getDimension(R.dimen.overlay_corner_radius)
+                    val rectF = RectF(0f, 0f, width.toFloat(), height.toFloat())
+                    path.addRoundRect(rectF, cornerRadius, cornerRadius, Path.Direction.CW)
 
-                    // Calculate number of pixels (ensure complete coverage)
-                    val adjustedPixelSize = 51 - pixelSize.coerceIn(1, 50)  // Invert the scale
+                    // Draw pixels within rounded rectangle
+                    canvas.clipPath(path)
+                    
+                    // Calculate pixels
+                    val adjustedPixelSize = 51 - pixelSize.coerceIn(1, 50)
                     val numPixelsX = kotlin.math.ceil(width / adjustedPixelSize.toFloat()).toInt()
                     val numPixelsY = kotlin.math.ceil(height / adjustedPixelSize.toFloat()).toInt()
                     val pixelW = width.toFloat() / numPixelsX
                     val pixelH = height.toFloat() / numPixelsY
                     val random = Random(System.currentTimeMillis())
 
-                    // Fill entire canvas with pixels
+                    // Fill with pixels
                     for (y in 0 until numPixelsY) {
                         for (x in 0 until numPixelsX) {
                             paint.color = colors[random.nextInt(colors.size)]
@@ -333,15 +342,12 @@ class OverlayManager(private val context: Context) {
                         }
                     }
 
-                    // Create new drawable and clean up old one
                     val oldDrawable = currentDrawable
                     currentDrawable = BitmapDrawable(context.resources, newBitmap)
 
                     if (!isDestroyed) {
                         overlayView.background = currentDrawable
-                        overlayView.alpha = opacity / 100f  // Apply opacity to the whole view
-                        
-                        // Clean up old drawable after setting new one
+                        overlayView.alpha = opacity / 100f
                         oldDrawable?.bitmap?.recycle()
                     } else {
                         newBitmap.recycle()
@@ -398,25 +404,27 @@ class OverlayManager(private val context: Context) {
     private fun switchToBlackMode() {
         synchronized(bitmapLock) {
             try {
-                // Stop pixel mode updates
                 mainHandler.removeCallbacksAndMessages(null)
                 
-                // Clean up existing resources
                 overlayView.background = null
                 currentDrawable?.bitmap?.recycle()
                 currentDrawable = null
                 
-                // Create a new black background
                 overlayView.post {
-                    // Instead of using CardView's background color, create a solid black drawable
-                    val blackDrawable = ColorDrawable(Color.BLACK)
-                    overlayView.background = blackDrawable
-                    overlayView.setCardBackgroundColor(Color.TRANSPARENT) // Clear card background
+                    overlayView.background = createRoundedDrawable(Color.BLACK)
+                    overlayView.setCardBackgroundColor(Color.TRANSPARENT)
                     overlayView.alpha = opacity / 100f
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    private fun createRoundedDrawable(color: Int): GradientDrawable {
+        return GradientDrawable().apply {
+            cornerRadius = context.resources.getDimension(R.dimen.overlay_corner_radius)
+            setColor(color)
         }
     }
 } 
