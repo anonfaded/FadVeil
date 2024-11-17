@@ -1,20 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Base theme -->
-    <style name="Theme.Fadveil" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="Theme.Fadveil" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Primary brand color -->
         <item name="colorPrimary">@color/primary_red</item>
         <item name="colorPrimaryVariant">@color/darker_red</item>
         <item name="colorOnPrimary">@color/white</item>
+        
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/primary_red</item>
+        <item name="colorSecondaryVariant">@color/darker_red</item>
+        <item name="colorOnSecondary">@color/white</item>
+        
+        <!-- Status bar and navigation -->
         <item name="android:statusBarColor">@color/dark_gray</item>
-        <item name="android:navigationBarColor">@color/dark_gray</item>
+        <item name="android:navigationBarColor">@color/nav_background_dark</item>
+        
+        <!-- Background colors -->
         <item name="android:windowBackground">@color/background_dark</item>
         <item name="colorSurface">@color/surface_dark</item>
         <item name="colorOnSurface">@color/white</item>
+        <item name="colorOnBackground">@color/white</item>
+        
+        <!-- Text colors -->
         <item name="android:textColor">@color/white</item>
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColorSecondary">@color/white</item>
-        <item name="colorOnBackground">@color/white</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <item name="colorSecondary">@color/primary_red</item>
+        
+        <!-- Material 3 specific colors -->
+        <item name="colorPrimaryContainer">@color/darker_red</item>
+        <item name="colorOnPrimaryContainer">@color/white</item>
+        <item name="colorSecondaryContainer">@color/surface_dark</item>
+        <item name="colorOnSecondaryContainer">@color/white</item>
+        
+        <!-- Bottom Navigation specific colors -->
+        <item name="colorSurfaceVariant">@color/nav_background_dark</item>
+        <item name="colorOnSurfaceVariant">@color/white</item>
     </style>
 </resources>
