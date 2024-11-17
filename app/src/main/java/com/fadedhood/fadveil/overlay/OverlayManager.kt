@@ -54,7 +54,7 @@ class OverlayManager(private val context: Context) {
 
     private var isPixelateMode = false
     private var opacity = 80
-    private var pixelSize = 50
+    private var pixelSize = 20
     private var updateHandler = Handler(Looper.getMainLooper())
     private var isUpdating = false
     private var currentBitmap: Bitmap? = null
@@ -87,6 +87,17 @@ class OverlayManager(private val context: Context) {
                 return true
             }
         }
+    )
+
+    private var currentDrawable: BitmapDrawable? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var isDestroyed = false
+
+    private val colors = arrayOf(
+        Color.BLACK,
+        Color.DKGRAY,
+        Color.rgb(20, 20, 20),  // Very dark gray
+        Color.rgb(40, 40, 40)   // Dark gray
     )
 
     init {
@@ -175,10 +186,10 @@ class OverlayManager(private val context: Context) {
                 gravity = Gravity.CENTER
             }
 
-            // Setup opacity slider with correct range
+            // Setup opacity slider
             container.findViewById<Slider>(R.id.opacitySlider)?.apply {
-                valueFrom = 10f  // Minimum 10% opacity
-                valueTo = 100f   // Maximum 100% opacity
+                valueFrom = 10f
+                valueTo = 100f
                 value = opacity.toFloat()
                 addOnChangeListener { _, value, fromUser ->
                     if (fromUser) {
@@ -190,10 +201,16 @@ class OverlayManager(private val context: Context) {
             // Setup pixelate slider
             container.findViewById<Slider>(R.id.pixelateSlider)?.apply {
                 visibility = if (isPixelateMode) View.VISIBLE else View.GONE
+                valueFrom = 1f    // Smallest pixels (largest number of them)
+                valueTo = 50f     // Largest pixels (smallest number of them)
                 value = pixelSize.toFloat()
+                stepSize = 1f     // Ensure whole number steps
                 addOnChangeListener { _, value, fromUser ->
                     if (fromUser) {
-                        setPixelSize(value.toInt())
+                        pixelSize = value.toInt()
+                        if (isPixelateMode) {
+                            updatePixelateEffect()
+                        }
                     }
                 }
             }
@@ -203,10 +220,13 @@ class OverlayManager(private val context: Context) {
                 check(if (isPixelateMode) R.id.pixelateMode else R.id.blackMode)
                 addOnButtonCheckedListener { _, checkedId, isChecked ->
                     if (isChecked) {
-                        isPixelateMode = (checkedId == R.id.pixelateMode)
-                        container.findViewById<Slider>(R.id.pixelateSlider)?.visibility =
-                            if (isPixelateMode) View.VISIBLE else View.GONE
-                        updateOverlayAppearance()
+                        val newPixelateMode = (checkedId == R.id.pixelateMode)
+                        if (isPixelateMode != newPixelateMode) {
+                            isPixelateMode = newPixelateMode
+                            container.findViewById<Slider>(R.id.pixelateSlider)?.visibility =
+                                if (isPixelateMode) View.VISIBLE else View.GONE
+                            updateOverlayAppearance()
+                        }
                     }
                 }
             }
@@ -228,15 +248,17 @@ class OverlayManager(private val context: Context) {
     }
 
     private fun updateOverlayAppearance() {
-        if (isPixelateMode) {
-            updatePixelateEffect()
-        } else {
-            synchronized(bitmapLock) {
-                // Clean up any existing bitmaps
-                currentBitmap?.recycle()
-                currentBitmap = null
-                nextBitmap?.recycle()
-                nextBitmap = null
+        synchronized(bitmapLock) {
+            if (isPixelateMode) {
+                overlayView.setCardBackgroundColor(Color.TRANSPARENT)
+                updatePixelateEffect()
+            } else {
+                // Clean up pixelation resources
+                mainHandler.removeCallbacksAndMessages(null)
+                currentDrawable?.bitmap?.recycle()
+                currentDrawable = null
+                
+                // Reset to solid black
                 overlayView.background = null
                 overlayView.setCardBackgroundColor(Color.BLACK)
                 overlayView.alpha = opacity / 100f
@@ -245,90 +267,95 @@ class OverlayManager(private val context: Context) {
     }
 
     private fun setOpacity(value: Int) {
-        opacity = value.coerceIn(10, 100)  // Ensure minimum 10% opacity
-        overlayView.apply {
-            setCardBackgroundColor(Color.BLACK)  // Ensure black background is maintained
-            alpha = opacity / 100f  // Set opacity
-        }
-    }
-
-    private fun setPixelSize(value: Int) {
-        pixelSize = value
-        if (isPixelateMode) {
-            updatePixelateEffect()
-        }
+        opacity = value.coerceIn(10, 100)
+        overlayView.alpha = opacity / 100f  // Always apply opacity to the view directly
     }
 
     private fun updatePixelateEffect() {
         synchronized(bitmapLock) {
-            if (isUpdating) return
+            if (isUpdating || isDestroyed) return
             isUpdating = true
 
-            updateHandler.removeCallbacksAndMessages(null)
-            updateHandler.postDelayed({
+            mainHandler.removeCallbacksAndMessages(null)
+            mainHandler.post {
                 try {
-                    // Create a new bitmap for the pixelation effect
                     val width = overlayView.width
                     val height = overlayView.height
                     if (width <= 0 || height <= 0) {
                         isUpdating = false
-                        return@postDelayed
+                        return@post
                     }
 
-                    // Safely recycle old bitmaps
-                    currentBitmap?.recycle()
-                    currentBitmap = null
-                    nextBitmap?.recycle()
-                    nextBitmap = null
-
                     // Create new bitmap
-                    nextBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-                    val canvas = Canvas(nextBitmap!!)
-                    
-                    // Scale down and up for pixelation effect
-                    val scaledWidth = width / pixelSize
-                    val scaledHeight = height / pixelSize
-                    val scaled = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
-                    val scaleCanvas = Canvas(scaled)
-                    
-                    // Draw the scaled content
-                    val matrix = Matrix()
-                    matrix.setScale(1f / pixelSize, 1f / pixelSize)
-                    scaleCanvas.drawBitmap(nextBitmap!!, matrix, null)
-                    
-                    // Scale back up
-                    matrix.reset()
-                    matrix.setScale(pixelSize.toFloat(), pixelSize.toFloat())
-                    canvas.drawBitmap(scaled, matrix, null)
-                    
-                    scaled.recycle()
-                    
-                    // Update the view
-                    overlayView.background = BitmapDrawable(context.resources, nextBitmap)
-                    currentBitmap = nextBitmap
-                    nextBitmap = null
+                    val newBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(newBitmap)
+                    val paint = android.graphics.Paint().apply {
+                        style = android.graphics.Paint.Style.FILL
+                    }
+
+                    // Fill background with black first
+                    canvas.drawColor(Color.BLACK)
+
+                    // Calculate number of pixels (ensure complete coverage)
+                    val adjustedPixelSize = 51 - pixelSize.coerceIn(1, 50)  // Invert the scale
+                    val numPixelsX = kotlin.math.ceil(width / adjustedPixelSize.toFloat()).toInt()
+                    val numPixelsY = kotlin.math.ceil(height / adjustedPixelSize.toFloat()).toInt()
+                    val pixelW = width.toFloat() / numPixelsX
+                    val pixelH = height.toFloat() / numPixelsY
+                    val random = Random(System.currentTimeMillis())
+
+                    // Fill entire canvas with pixels
+                    for (y in 0 until numPixelsY) {
+                        for (x in 0 until numPixelsX) {
+                            paint.color = colors[random.nextInt(colors.size)]
+                            canvas.drawRect(
+                                x * pixelW,
+                                y * pixelH,
+                                (x + 1) * pixelW,
+                                (y + 1) * pixelH,
+                                paint
+                            )
+                        }
+                    }
+
+                    // Create new drawable and clean up old one
+                    val oldDrawable = currentDrawable
+                    currentDrawable = BitmapDrawable(context.resources, newBitmap)
+
+                    if (!isDestroyed) {
+                        overlayView.background = currentDrawable
+                        overlayView.alpha = opacity / 100f  // Apply opacity to the whole view
+                        
+                        // Clean up old drawable after setting new one
+                        oldDrawable?.bitmap?.recycle()
+                    } else {
+                        newBitmap.recycle()
+                    }
+
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {
                     isUpdating = false
+                    if (isPixelateMode && !isDestroyed) {
+                        mainHandler.postDelayed({ updatePixelateEffect() }, 100)
+                    }
                 }
-            }, 100)
+            }
         }
     }
 
     fun destroy() {
         synchronized(bitmapLock) {
-            updateHandler.removeCallbacksAndMessages(null)
-            currentBitmap?.recycle()
-            currentBitmap = null
-            nextBitmap?.recycle()
-            nextBitmap = null
-            hideControlPanel()
-            try {
-                windowManager.removeView(overlayView)
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            isDestroyed = true
+            mainHandler.removeCallbacksAndMessages(null)
+            currentDrawable?.bitmap?.recycle()
+            currentDrawable = null
+        }
+        hideControlPanel()
+        try {
+            windowManager.removeView(overlayView)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
