@@ -308,7 +308,8 @@ class OverlayManager(private val context: Context) {
                     val canvas = Canvas(newBitmap)
                     val paint = android.graphics.Paint().apply {
                         style = android.graphics.Paint.Style.FILL
-                        isAntiAlias = true
+                        isAntiAlias = false  // Disable anti-aliasing for sharp edges
+                        isDither = false     // Disable dithering
                     }
 
                     // Create path for rounded corners
@@ -317,33 +318,45 @@ class OverlayManager(private val context: Context) {
                     val rectF = RectF(0f, 0f, width.toFloat(), height.toFloat())
                     path.addRoundRect(rectF, cornerRadius, cornerRadius, Path.Direction.CW)
 
-                    // Draw pixels within rounded rectangle
+                    // Draw black background first
+                    paint.color = Color.BLACK
+                    canvas.drawPath(path, paint)
+                    
+                    // Clip to rounded rectangle
                     canvas.clipPath(path)
                     
-                    // Calculate pixels
+                    // Calculate pixels with slight overlap
                     val adjustedPixelSize = 51 - pixelSize.coerceIn(1, 50)
                     val numPixelsX = kotlin.math.ceil(width / adjustedPixelSize.toFloat()).toInt()
                     val numPixelsY = kotlin.math.ceil(height / adjustedPixelSize.toFloat()).toInt()
-                    val pixelW = width.toFloat() / numPixelsX
-                    val pixelH = height.toFloat() / numPixelsY
+                    val pixelW = width.toFloat() / (numPixelsX - 1)  // Adjust for complete coverage
+                    val pixelH = height.toFloat() / (numPixelsY - 1)  // Adjust for complete coverage
                     val random = Random(System.currentTimeMillis())
 
                     // Fill with pixels
                     for (y in 0 until numPixelsY) {
                         for (x in 0 until numPixelsX) {
                             paint.color = colors[random.nextInt(colors.size)]
+                            val left = x * pixelW
+                            val top = y * pixelH
+                            val right = if (x == numPixelsX - 1) width.toFloat() else (x + 1) * pixelW
+                            val bottom = if (y == numPixelsY - 1) height.toFloat() else (y + 1) * pixelH
+                            
+                            // Draw pixel with exact edges
                             canvas.drawRect(
-                                x * pixelW,
-                                y * pixelH,
-                                (x + 1) * pixelW,
-                                (y + 1) * pixelH,
+                                left,
+                                top,
+                                right,
+                                bottom,
                                 paint
                             )
                         }
                     }
 
                     val oldDrawable = currentDrawable
-                    currentDrawable = BitmapDrawable(context.resources, newBitmap)
+                    currentDrawable = BitmapDrawable(context.resources, newBitmap).apply {
+                        setAntiAlias(false)  // Disable anti-aliasing for the drawable
+                    }
 
                     if (!isDestroyed) {
                         overlayView.background = currentDrawable
