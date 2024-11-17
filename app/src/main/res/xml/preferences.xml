@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <PreferenceCategory android:title="Theme Settings">
+    <PreferenceCategory android:title="@string/settings_title">
         <SwitchPreferenceCompat
             android:key="amoled_mode"
-            android:title="AMOLED Black Theme"
-            android:summary="Use pure black theme for AMOLED displays" />
+            android:title="@string/amoled_theme_title"
+            android:summary="@string/amoled_theme_summary" />
     </PreferenceCategory>
 </PreferenceScreen> 

@@ -1,3 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FadVeil</string>
+    
+    <!-- Home Fragment -->
+    <string name="home_title">FadVeil</string>
+    <string name="overlay_controls">Overlay Controls</string>
+    
+    <!-- Settings Fragment -->
+    <string name="settings_title">Theme Settings</string>
+    <string name="amoled_theme_title">AMOLED Black Theme</string>
+    <string name="amoled_theme_summary">Use pure black theme for AMOLED displays</string>
+    
+    <!-- About Fragment -->
+    <string name="about_app_name">FadVeil</string>
+    <string name="about_version">Version 1.0</string>
+    <string name="about_description">A simple overlay app that helps you create movable dark spots on your screen.</string>
 </resources>

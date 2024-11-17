@@ -15,7 +15,7 @@
             android:id="@+id/topAppBar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="FadVeil"
+            app:title="@string/home_title"
             app:titleCentered="true"
             app:titleTextColor="@color/white" />
 
@@ -49,7 +49,7 @@
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Overlay Controls"
+                        android:text="@string/overlay_controls"
                         android:textAppearance="?attr/textAppearanceTitleLarge" />
 
                     <com.google.android.material.button.MaterialButton

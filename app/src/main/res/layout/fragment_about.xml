@@ -49,21 +49,21 @@
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="FadVeil"
+                        android:text="@string/about_app_name"
                         android:textAppearance="?attr/textAppearanceHeadlineMedium" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Version 1.0"
+                        android:text="@string/about_version"
                         android:textAppearance="?attr/textAppearanceBodyMedium" />
 
                     <com.google.android.material.textview.MaterialTextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:text="A simple overlay app that helps you create movable dark spots on your screen."
+                        android:text="@string/about_description"
                         android:textAppearance="?attr/textAppearanceBodyLarge" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
