@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.fadedhood.fadveil.databinding.FragmentSettingsBinding
 import com.fadedhood.fadveil.theme.ThemeManager
+import com.fadedhood.fadveil.utils.FontUtils
 
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
@@ -24,7 +25,7 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        FontUtils.applyFontToFragment(this, view)
         // Initialize switch state
         binding.switchAmoledMode.isChecked = ThemeManager.isAmoledMode(requireContext())
 

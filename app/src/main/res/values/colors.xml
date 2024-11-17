@@ -14,9 +14,13 @@
     
     <!-- AMOLED colors -->
     <color name="background_amoled">#FF000000</color>
-    <color name="surface_amoled">#FF000000</color>
+    <color name="surface_amoled">#FF050505</color>
     
     <!-- Navigation colors -->
     <color name="nav_background_dark">#FF1E1E1E</color>
     <color name="nav_background_amoled">#FF000000</color>
+    
+    <!-- Card colors -->
+    <color name="card_background_dark">#FF1A1A1A</color>  <!-- Darker than surface_dark -->
+    <color name="card_background_amoled">#FF0A0A0A</color>  <!-- Almost black but not pure black -->
 </resources>

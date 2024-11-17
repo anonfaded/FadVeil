@@ -15,15 +15,13 @@ object ThemeManager {
             .putBoolean(PREF_AMOLED_MODE, enabled)
             .apply()
             
-        AppCompatDelegate.setDefaultNightMode(
-            if (enabled) AppCompatDelegate.MODE_NIGHT_YES 
-            else AppCompatDelegate.MODE_NIGHT_NO
-        )
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         
-        activity.setTheme(
-            if (enabled) R.style.Theme_Fadveil_Amoled 
-            else R.style.Theme_Fadveil
-        )
+        if (enabled) {
+            activity.setTheme(R.style.Theme_Fadveil_Amoled)
+        } else {
+            activity.setTheme(R.style.Theme_Fadveil)
+        }
         
         activity.recreate()
     }
@@ -34,14 +32,12 @@ object ThemeManager {
     }
 
     fun applyTheme(activity: AppCompatActivity) {
-        AppCompatDelegate.setDefaultNightMode(
-            if (isAmoledMode(activity)) AppCompatDelegate.MODE_NIGHT_YES 
-            else AppCompatDelegate.MODE_NIGHT_NO
-        )
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         
-        activity.setTheme(
-            if (isAmoledMode(activity)) R.style.Theme_Fadveil_Amoled 
-            else R.style.Theme_Fadveil
-        )
+        if (isAmoledMode(activity)) {
+            activity.setTheme(R.style.Theme_Fadveil_Amoled)
+        } else {
+            activity.setTheme(R.style.Theme_Fadveil)
+        }
     }
 }

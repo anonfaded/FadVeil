@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.fadedhood.fadveil.databinding.FragmentHomeBinding
 import com.fadedhood.fadveil.service.OverlayService
+import com.fadedhood.fadveil.utils.FontUtils
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -27,6 +28,7 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        FontUtils.applyFontToFragment(this, view)
 
         binding.btnRequestPermission.setOnClickListener {
             if (!Settings.canDrawOverlays(requireContext())) {
